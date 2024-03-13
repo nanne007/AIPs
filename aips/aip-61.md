@@ -213,7 +213,7 @@ The **public key** of a keyless account consists of:
 1. $\mathsf{iss\\_val}$: the OIDC provider’s identity, as it appears in a JWT’s `iss` field (e.g., `https://accounts.google.com`), denoted by $\mathsf{iss\\_val}$
 2. $\mathsf{addr\\_idc}$: an **identity commitment (IDC)**, which is a <u>hiding</u> commitment to:
    - The owning user’s identifier issued by the OIDC provider (e.g., `alice@gmail.com`), denoted by $\mathsf{uid\\_val}$.
-   - The name of the JWT field that stores the user identifier, denoted by $\mathsf{uid\\_key}$. Currently, we only allow `sub` or `email`[^jwt-email-field].
+   - The name of the JWT field that stores the user identifier, denoted by $\mathsf{uid\\_key}$. Currently, the Typescript SDK only allows `sub` or `email`[^jwt-email-field] to protect naive developers from using the wrong JWT field. Nonetheless, the validators will accept any field, so as to not restrict power users from innovating on top of this feature.
    - The managing application’s identifier issued to it during registration with the OIDC provider (i.e., an OAuth `client_id` stored in the JWT’s `aud` field), denoted by $\mathsf{aud\\_val}$. 
 
 A bit more formally (but ignoring complex implementation details), the IDC is computed by hashing the fields above using a SNARK-friendly hash function $H'$:
