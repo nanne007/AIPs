@@ -416,11 +416,25 @@ Unfortunately, Groth16 is a pre-processing SNARK with a relation-specific truste
 
 A consequence of this is that we cannot upgrade/bugfix our ZK relation implementation without redoing the setup. Therefore, in the future, we will likely transition to either a **transparent** SNARK or one with a one-time, relation-independent **universal trusted setup**.
 
-### Reference implementation
+### PRs and code pointers
 
 We will add more links to our circuit code and Rust TXN authenticator below:
  - [Rust authenticator code for the leaky mode](https://github.com/aptos-labs/aptos-core/pull/11681)
  - [Rust authenticator code for the Groth16-based ZKP mode](https://github.com/aptos-labs/aptos-core/pull/11772)
+ - [Fetch the Groth16 VK from on-chain](https://github.com/aptos-labs/aptos-core/pull/11895)
+ - [Properly handle exp_horizon + VK & Configuration initialization in Rust](https://github.com/aptos-labs/aptos-core/pull/11966)
+ - [Optional training wheels signature](https://github.com/aptos-labs/aptos-core/pull/11986)
+ - [Fix smoke tests](https://github.com/aptos-labs/aptos-core/pull/11994)
+ - [base10 string for nonce](https://github.com/aptos-labs/aptos-core/pull/12001)
+ - [Remove uid_key restriction](https://github.com/aptos-labs/aptos-core/pull/12007)
+ - [Optimize `iss` storage & refactor](https://github.com/aptos-labs/aptos-core/pull/12017)
+ - [Rename to AIP-61 terminology](https://github.com/aptos-labs/aptos-core/pull/12123)
+ - [Rename to keyless](https://github.com/aptos-labs/aptos-core/pull/12285)
+ - [base64 fixes, training wheels signature fixes](https://github.com/aptos-labs/aptos-core/pull/12287)
+ - [Custom hex serialization for some keyless structs](https://github.com/aptos-labs/aptos-core/pull/12295)
+ - [e2e tests for feature gating](https://github.com/aptos-labs/aptos-core/pull/12296)
+ - [Support for passkey-based EPKs & non-malleability signature fixes](https://github.com/aptos-labs/aptos-core/pull/12333)
+ - [Update verification key & test proof](https://github.com/aptos-labs/aptos-core/pull/12413)
 
 ## Testing (Optional)
 
