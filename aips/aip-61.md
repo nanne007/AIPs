@@ -436,6 +436,7 @@ We will add more links to our circuit code and Rust TXN authenticator below:
  - [Support for passkey-based EPKs & non-malleability signature fixes](https://github.com/aptos-labs/aptos-core/pull/12333)
  - [Update verification key & test proof](https://github.com/aptos-labs/aptos-core/pull/12413)
  - [Fix public inputs hash generation, fix serde deserialization, add Google as default OIDC provider in devnet](https://github.com/aptos-labs/aptos-core/pull/12476/files)
+ - [Fix feature gating & match alg fields](https://github.com/aptos-labs/aptos-core/pull/12521)
 
 ## Testing (Optional)
 
