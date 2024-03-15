@@ -921,7 +921,7 @@ Its design is described in [AIP-75](/aips/aip-75.md), but here we highlight some
 
 Transaction signatures for keyless accounts involve verifying an OIDC signature. This requires that validators **agree on the latest JWKs** (i.e., public keys) of the OIDC provider, which are periodically-updated at a provider-specific **OpenID configuration URL**. 
 
-The design and implementation of JWK consensus is described in [AIP-67](/aips/aip-67), but here we highlight some of its key properties:
+The design and implementation of JWK consensus is described in [AIP-67](/aips/aip-67.md), but here we highlight some of its key properties:
 
 - The validators will frequently scan for JWK changes at every supported provider’s **OpenID configuration URL**
 - When a change is detected by a validator, that validator will propose the change via a one-shot consensus mechanism
