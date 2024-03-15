@@ -258,7 +258,7 @@ After defining the “public key” above, a natural question arises:
 
 The answer is there is no additional secret key that the user has to write down. Instead, the “secret key”, consists of the user’s ability to sign in to the OIDC account via the managing application committed in the $\mathsf{auth\\_key}$ above.
 
-Put differently, the “secret key” can be thought of as the user’s password for that account, which the user already knows, or a pre-installed HTTP cookie which precludes the need for the user to re-enter the password. Although, this **password is not sufficient**: the managing application must be available: it must allow the user to sign in to their OIDC account and receive the OIDC signature. (We discuss [how to deal with disappearing apps](#alternative-recovery-paths-for-when-managing-applications-disappear) later on.)
+Put differently, the “secret key” can be thought of as the user’s password for that account, which the user already knows, or a pre-installed HTTP cookie which precludes the need for the user to re-enter the password. However, this **password is not sufficient**: the managing application must be available: it must allow the user to sign in to their OIDC account and receive the OIDC signature. (We discuss [how to deal with disappearing apps](#alternative-recovery-paths-for-when-managing-applications-disappear) later on.)
 
 More formally, if a user can successfully use the application identified by $\mathsf{aud\\_val}$ to sign in (via OAuth) to their OIDC account identified by $(\mathsf{uid\\_key}, \mathsf{uid\\_val})$ and issued by the OIDC provider identified by $\mathsf{iss\\_val}$, then that ability acts as that users “secret key.”
 
@@ -416,7 +416,111 @@ Unfortunately, Groth16 is a pre-processing SNARK with a relation-specific truste
 
 A consequence of this is that we cannot upgrade/bugfix our ZK relation implementation without redoing the setup. Therefore, in the future, we will likely transition to either a **transparent** SNARK or one with a one-time, relation-independent **universal trusted setup**.
 
-### PRs and code pointers
+### Rust structs
+
+A keyless public key is defined as:
+
+```rust
+pub struct KeylessPublicKey {
+    /// The value of the `iss` field from the JWT, indicating the OIDC provider.
+    /// e.g., https://accounts.google.com
+    pub iss_val: String,
+
+    /// SNARK-friendly commitment to:
+    /// 1. The application's ID; i.e., the `aud` field in the signed OIDC JWT representing the OAuth client ID.
+    /// 2. The OIDC provider's internal identifier for the user; e.g., the `sub` field in the signed OIDC JWT
+    ///    which is Google's internal user identifier for bob@gmail.com, or the `email` field.
+    ///
+    /// e.g., H(aud || uid_key || uid_val || pepper), where `pepper` is the commitment's randomness used to hide
+    ///  `aud` and `sub`.
+    pub idc: IdCommitment,
+}
+
+pub struct IdCommitment(#[serde(with = "serde_bytes")] pub(crate) Vec<u8>);
+```
+
+A keyless signature is defined as:
+
+```rust
+pub struct KeylessSignature {
+    pub cert: EphemeralCertificate,
+
+    /// The decoded/plaintext JWT header (i.e., *not* base64url-encoded), with two relevant fields:
+    ///  1. `kid`, which indicates which of the OIDC provider's JWKs should be used to verify the
+    ///     \[ZKPoK of an\] OpenID signature.,
+    ///  2. `alg`, which indicates which type of signature scheme was used to sign the JWT
+    pub jwt_header_json: String,
+
+    /// The expiry time of the `ephemeral_pubkey` represented as a UNIX epoch timestamp in seconds.
+    pub exp_date_secs: u64,
+
+    /// A short lived public key used to verify the `ephemeral_signature`.
+    pub ephemeral_pubkey: EphemeralPublicKey,
+
+    /// A signature ove the transaction and, if present, the ZKP, under `ephemeral_pubkey`.
+    /// The ZKP is included in this signature to prevent malleability attacks.
+    pub ephemeral_signature: EphemeralSignature,
+}
+
+pub enum EphemeralCertificate {
+    ZeroKnowledgeSig(ZeroKnowledgeSig),
+    OpenIdSig(OpenIdSig),
+}
+
+pub struct ZeroKnowledgeSig {
+    pub proof: ZKP,
+    /// The expiration horizon that the circuit should enforce on the expiration date committed in
+    /// the nonce. This must be <= `Configuration::max_expiration_horizon_secs`.
+    pub exp_horizon_secs: u64,
+    /// An optional extra field (e.g., `"<name>":"<val>") that will be matched publicly in the JWT
+    pub extra_field: Option<String>,
+    /// Will be set to the override `aud` value that the circuit should match, instead of the `aud`
+    /// in the IDC. This will allow users to recover keyless accounts bound to an application that
+    /// is no longer online.
+    pub override_aud_val: Option<String>,
+    /// A signature on the proof and the statement (via the training wheels SK) to mitigate against
+    /// flaws in our circuit.
+    pub training_wheels_signature: Option<EphemeralSignature>,
+}
+
+pub struct OpenIdSig {
+    /// The decoded bytes of the JWS signature in the JWT (https://datatracker.ietf.org/doc/html/rfc7515#section-3)
+    #[serde(with = "serde_bytes")]
+    pub jwt_sig: Vec<u8>,
+    /// The decoded/plaintext JSON payload of the JWT (https://datatracker.ietf.org/doc/html/rfc7519#section-3)
+    pub jwt_payload_json: String,
+    /// The name of the key in the claim that maps to the user identifier; e.g., "sub" or "email"
+    pub uid_key: String,
+    /// The random value used to obfuscate the EPK from OIDC providers in the nonce field
+    #[serde(with = "serde_bytes")]
+    pub epk_blinder: Vec<u8>,
+    /// The privacy-preserving value used to calculate the identity commitment. It is typically uniquely derived from `(iss, client_id, uid_key, uid_val)`.
+    pub pepper: Pepper,
+    /// When an override aud_val is used, the signature needs to contain the aud_val committed in the
+    /// IDC, since the JWT will contain the override.
+    pub idc_aud_val: Option<String>,
+}
+
+pub enum EphemeralPublicKey {
+    Ed25519 {
+        public_key: Ed25519PublicKey,
+    },
+    Secp256r1Ecdsa {
+        public_key: secp256r1_ecdsa::PublicKey,
+    },
+}
+
+pub enum EphemeralSignature {
+    Ed25519 {
+        signature: Ed25519Signature,
+    },
+    WebAuthn {
+        signature: PartialAuthenticatorAssertionResponse,
+    },
+}
+```
+
+### PRs
 
 We will add more links to our circuit code and Rust TXN authenticator below:
  - [Rust authenticator code for the leaky mode](https://github.com/aptos-labs/aptos-core/pull/11681)
