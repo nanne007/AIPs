@@ -285,7 +285,7 @@ where:
 7. $\mathsf{exp\\_date}$ is a timestamp past which $\mathsf{epk}$ is considered expired and cannot be used to sign TXN.
 8. $\rho$ is a high-entropy **EPK blinder** used to create an **EPK commitment** to $\mathsf{epk}$ and $\mathsf{exp\\_date}$ that is stored in the $\mathsf{jwt}[\texttt{"nonce"}]$ field
 9. $r$​ is the pepper for the address IDC, which is assumed to be zero in this "leaky mode"
-10. $\mathsf{idc\\_aud\\_val}$ is an **optional** field used for [account recovery](#recovery-service). This field is expected to be set to the same `aud` value as in the IDC. Note that this is necessary information to include in the TXN signature during recovery, since, in that case, the $$\mathsf{jwt}$$ payload will contain the `aud` of the recovery service, not the `aud` committed in the IDC.
+10. $\mathsf{idc\\_aud\\_val}$ is an **optional** field used for [account recovery](#recovery-service). This field is expected to be set to the same `aud` value as in the IDC. Note that this is necessary information to include in the TXN signature during recovery, since, in that case, the $\mathsf{jwt}$ payload will contain the `aud` of the recovery service, not the `aud` committed in the IDC.
 
 **tl;dr**: To **verify the $\sigma_\mathsf{txn}$ signature**, validators check that the OIDC provider (1) signed the user and app IDs that are committed in the address IDC and (2) signed the EPK which, in turn, signed the transaction, while enforcing some expiration date on the EPK.
 
@@ -294,7 +294,7 @@ In more detail, signature verification against the PK $(\mathsf{iss\\_val}, \mat
 1. If using `email`-based IDs, ensure the email has been verified:
    1. If $\mathsf{uid\\_key}\stackrel{?}{=}\texttt{"email"}$, assert $\mathsf{jwt}[\texttt{"email\\_verified"}] \stackrel{?}{=} \texttt{"true"}$
 1. Let $\mathsf{uid\\_val}\gets\mathsf{jwt}[\mathsf{uid\\_key}]$
-1. If $\mathsf{idc\\_aud\\_val}$ is set, assert that $$\mathsf{jwt}[\texttt{"aud"}]$$ is in the [`aud` override list](#aud-override-list), stored on chain
+1. If $\mathsf{idc\\_aud\\_val}$ is set, assert that $\mathsf{jwt}[\texttt{"aud"}]$ is in the [`aud` override list](#aud-override-list), stored on chain
 1. If $\mathsf{idc\\_aud\\_val}$ is set, let $\mathsf{aud\\_val}\gets \mathsf{idc\\_aud\\_val}$; otherwise, let $\mathsf{aud\\_val}\gets\mathsf{jwt}[\texttt{"aud"}]$
 1. Assert $\mathsf{addr\\_idc} \stackrel{?}{=} H'(\mathsf{uid\\_key}, \mathsf{uid\\_val}, \mathsf{aud\\_val}; r)$, using the pepper $r$ from the signature
 1. Verify that the PK matches the authentication key on-chain:
