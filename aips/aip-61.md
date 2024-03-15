@@ -198,15 +198,13 @@ As pointed out above, our approach directly authenticates users to the blockchai
 
  > How will we solve the problem? Describe in detail precisely how this proposal should be implemented. Include proposed design principles that should be followed in implementing this feature. Make the proposal specific enough to allow others to build upon it and perhaps even derive competing implementations.
 
-### Keyless accounts
-
 Below, we explain the key concepts behind how keyless accounts are implemented:
 
 1. What is the *public key* of a keyless account?
 2. How is the *authentication key* derived from this public key?
 3. What does the *digital signature* look like for OIDC account transactions?
 
-#### Public keys
+### Public keys
 
 The **public key** of a keyless account consists of:
 
@@ -222,7 +220,7 @@ A bit more formally (but ignoring complex implementation details), the IDC is co
 \mathsf{addr\_idc} = H'(\mathsf{uid\_key}, \mathsf{uid\_val}, \mathsf{aud\_val}; r),\ \text{where}\ r\stackrel{\$}{\gets} \{0,1\}^{256}
 ```
 
-#### Peppers
+### Peppers
 
 Note the use of a (high-entropy) blinding factor $r$ to derive the IDC above. This ensures that the IDC is indeed a hiding commitment to the user’s and managing application’s identity. Throughout this AIP, this blinding factor is referred to as a privacy-preserving **pepper**.
 
@@ -240,7 +238,7 @@ Relying on users to remember their pepper $r$ would maintain the status-quo of e
 
 Therefore, we introduce a **pepper service** that can help users recover their pepper (we discuss its properties [in the appendix](#Pepper-service)).
 
-#### Authentication keys
+### Authentication keys
 
 Next, the **authentication key** of a keyless account is simply the hash of its public key defined above. More formally, assuming any cryptographic hash function $H$, the authentication key is:
 
@@ -250,7 +248,7 @@ Next, the **authentication key** of a keyless account is simply the hash of its 
 
 **Note:** In practice, a domain separator is also hashed in above, but for simplicity of exposition, we ignore such details.
 
-#### Secret keys
+### Secret keys
 
 After defining the “public key” above, a natural question arises:
 
@@ -261,6 +259,10 @@ The answer is there is no additional secret key that the user has to write down.
 Put differently, the “secret key” can be thought of as the user’s password for that account, which the user already knows, or a pre-installed HTTP cookie which precludes the need for the user to re-enter the password. However, this **password is not sufficient**: the managing application must be available: it must allow the user to sign in to their OIDC account and receive the OIDC signature. (We discuss [how to deal with disappearing apps](#alternative-recovery-paths-for-when-managing-applications-disappear) later on.)
 
 More formally, if a user can successfully use the application identified by $\mathsf{aud\\_val}$ to sign in (via OAuth) to their OIDC account identified by $(\mathsf{uid\\_key}, \mathsf{uid\\_val})$ and issued by the OIDC provider identified by $\mathsf{iss\\_val}$, then that ability acts as that users “secret key.”
+
+### Signatures
+
+We begin with a “warm-up” and describe our “leaky mode” keyless signatures which do not preserve the user’s privacy. After, we describe our “zero-knowledge” signatures which do preserve privacy.
 
 #### _Warm-up_: Leaky signatures that reveal the user’s and app’s identity
 
@@ -905,7 +907,7 @@ Its design is outside the scope of this AIP, but here we highlight some of its k
 
 As long as the ZKP proving overhead in the browser and on mobile phones remains high, there will be a **ZK proving service** to help users compute their ZKPs fast. 
 
-Its design is outside the scope of this AIP, but here we highlight some of its key properties:
+Its design is described in [AIP-75](/aips/aip-75.md), but here we highlight some of its key properties:
 
 - If the service is down, users can still access their account (although more slowly), since they can always compute ZKPs on their own.
   - Unless the proving service is operating with “training wheels” on (see [below](#training-wheels))
@@ -919,7 +921,7 @@ Its design is outside the scope of this AIP, but here we highlight some of its k
 
 Transaction signatures for keyless accounts involve verifying an OIDC signature. This requires that validators **agree on the latest JWKs** (i.e., public keys) of the OIDC provider, which are periodically-updated at a provider-specific **OpenID configuration URL**. 
 
-The design and implementation of JWK consensus is outside the scope of this AIP, but here we highlight some of its key properties:
+The design and implementation of JWK consensus is described in [AIP-67](/aips/aip-67), but here we highlight some of its key properties:
 
 - The validators will frequently scan for JWK changes at every supported provider’s **OpenID configuration URL**
 - When a change is detected by a validator, that validator will propose the change via a one-shot consensus mechanism
